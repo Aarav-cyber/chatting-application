@@ -1,0 +1,290 @@
+/* Modern Font Import */
+@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600&display=swap');
+
+/* Gradient Animation */
+@keyframes gradientBG {
+  0% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+  100% { background-position: 0% 50%; }
+}
+
+/* Floating Animation */
+@keyframes float {
+  0% { transform: translateY(0px); }
+  50% { transform: translateY(-10px); }
+  100% { transform: translateY(0px); }
+}
+
+/* Pulse Animation */
+@keyframes pulse {
+  0% { box-shadow: 0 0 0 0 rgba(26, 115, 232, 0.4); }
+  70% { box-shadow: 0 0 0 10px rgba(26, 115, 232, 0); }
+  100% { box-shadow: 0 0 0 0 rgba(26, 115, 232, 0); }
+}
+*{
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+  font-family: 'Poppins', Arial, sans-serif;
+}
+
+/* Enhanced Login Container */
+.login-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 100vh;
+  font-family: 'Poppins', Arial, sans-serif;
+  text-align: center;
+  padding: 20px;
+  color: #202124;
+  background: linear-gradient(-45deg, #f5f7fa, #e4e8eb, #f0f5ff, #e6f0ff);
+  background-size: 400% 400%;
+  animation: gradientBG 15s ease infinite;
+  position: relative;
+  overflow: hidden;
+}
+
+.login-container::before {
+  content: '';
+  position: absolute;
+  top: -50%;
+  left: -50%;
+  width: 200%;
+  height: 200%;
+  background: radial-gradient(circle, rgba(255,255,255,0.1) 0%, rgba(255,255,255,0) 70%);
+  pointer-events: none;
+}
+
+/* Logo with Floating Effect */
+.logo-image {
+  width: 80px;
+  height: 80px;
+  margin-bottom: 16px;
+  filter: drop-shadow(0 4px 6px rgba(0,0,0,0.1));
+  animation: float 3s ease-in-out infinite;
+  transition: all 0.3s ease;
+}
+
+.logo-image:hover {
+  transform: scale(1.1);
+}
+
+/* Typography Enhancements */
+.login-container h1 {
+  font-size: 26px;
+  font-weight: 500;
+  margin-bottom: 12px;
+  letter-spacing: 0.25px;
+  color: #202124;
+}
+
+.para {
+  margin-bottom: 48px;
+  line-height: 1.6;
+}
+
+.para p {
+  font-size: 16px;
+  color: #5f6368;
+  margin: 0;
+  font-weight: 300;
+}
+
+/* Modern Card Design */
+.main-box {
+  background: rgba(255, 255, 255, 0.9);
+  backdrop-filter: blur(8px);
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  border-radius: 16px;
+  padding: 40px 36px;
+  width: 100%;
+  max-width: 400px;
+  box-sizing: border-box;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+  transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+  transform-style: preserve-3d;
+  position: relative;
+  overflow: hidden;
+}
+
+.main-box:hover {
+  transform: perspective(1000px) rotateY(5deg) rotateX(2deg) translateY(-5px);
+  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.15), 
+              0 0 0 2px rgba(26, 115, 232, 0.2);
+}
+
+.main-box::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 4px;
+  background: linear-gradient(90deg, #4285f4, #34a853, #fbbc05, #ea4335);
+}
+
+.main-box h1 {
+  font-size: 24px;
+  font-weight: 500;
+  margin-bottom: 12px;
+  color: #202124;
+}
+
+.main-box p {
+  font-size: 14px;
+  color: #5f6368;
+  margin: 16px 0;
+  line-height: 1.5;
+  font-weight: 300;
+}
+
+/* Button Container with Pulse Effect */
+.google-button-container {
+  margin: 24px 0;
+  display: flex;
+  justify-content: center;
+  transition: transform 0.3s ease;
+}
+
+.google-button-container:hover {
+  transform: scale(1.02);
+}
+
+/* Footer Text Enhancements */
+.footer-text {
+  font-size: 12px;
+  color: #5f6368;
+  margin-top: 24px;
+  line-height: 1.6;
+  font-weight: 300;
+}
+
+/* Learn More Link with Animation */
+.learn-more {
+  color: #1a73e8;
+  text-decoration: none;
+  font-weight: 500;
+  margin-left: 4px;
+  position: relative;
+  transition: all 0.3s ease;
+}
+
+.learn-more:hover {
+  text-decoration: none;
+  color: #0d5bba;
+}
+
+.learn-more::after {
+  content: '';
+  position: absolute;
+  bottom: -2px;
+  left: 0;
+  width: 0;
+  height: 2px;
+  background-color: #1a73e8;
+  transition: width 0.3s ease;
+}
+
+.learn-more:hover::after {
+  width: 100%;
+}
+
+/* User Info Styling */
+.user-info {
+  font-size: 14px;
+  color: #202124;
+  margin: 16px 0;
+  font-weight: 500;
+  padding: 12px;
+  background: rgba(241, 243, 244, 0.5);
+  border-radius: 8px;
+  border-left: 3px solid #1a73e8;
+}
+
+/* Responsive Adjustments */
+@media (max-width: 480px) {
+  .main-box {
+    padding: 30px 24px;
+    max-width: 90%;
+  }
+  
+  .login-container h1 {
+    font-size: 22px;
+  }
+  
+  .logo-image {
+    width: 70px;
+    height: 70px;
+  }
+}
+
+/* Add these to your existing user.css */
+.message {
+  margin-bottom: 1rem;
+}
+
+.message-content {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.message-sent {
+  justify-content: flex-end;
+}
+
+.message-received {
+  justify-content: flex-start;
+}
+
+.message-avatar {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  object-fit: cover;
+}
+
+.message-details {
+  max-width: 70%;
+}
+
+.message-header {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-bottom: 0.25rem;
+}
+
+.message-sender {
+  font-weight: bold;
+}
+
+.message-time {
+  font-size: 0.75rem;
+  opacity: 0.7;
+}
+
+.message-text {
+  padding: 0.5rem 1rem;
+  border-radius: 1rem;
+}
+
+.message-sent .message-text {
+  background-color: #3b82f6;
+  color: white;
+  border-top-right-radius: 0;
+}
+
+.message-received .message-text {
+  background-color: #e5e7eb;
+  color: black;
+  border-top-left-radius: 0;
+}
+
+.message-status {
+  font-size: 0.75rem;
+  opacity: 0.7;
+  text-align: right;
+  margin-top: 0.25rem;
+}
