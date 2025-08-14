@@ -1,4 +1,4 @@
-## Chatting with Notification – Real‑Time Chat App
+## Chatting with Notification(mern)
 
 A full‑stack real‑time chat application with Google Sign‑In, REST APIs, and Socket.IO for instant messaging. This monorepo contains a Node/Express backend (`backchat`) and a React + Vite frontend (`frontchat`).
 
