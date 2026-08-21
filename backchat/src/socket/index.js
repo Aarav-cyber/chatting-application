@@ -7,7 +7,7 @@ const { pubClient, subClient } = require("../config/redis");
 const initializeSocket = (httpServer) => {
   const io = new Server(httpServer, {
     cors: {
-      origin: process.env.CLIENT_URL || "http://localhost:5173",
+      origin: "*",
       methods: ["GET", "POST"],
     },
   });
