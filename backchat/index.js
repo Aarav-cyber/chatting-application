@@ -1,60 +1,43 @@
-const express = require('express');
-const mongoose = require('mongoose');
-const cors = require('cors');
-require('dotenv').config();
+const express = require("express");
+const http = require("http");
+const cors = require("cors");
+require("dotenv").config();
+
+const connectDB = require("./src/config/db");
+const initializeSocket = require("./src/socket");
+
+const authRoutes = require("./src/routes/auth");
+const userRoutes = require("./src/routes/users");
+const messageRoutes = require("./src/routes/messages");
 
 const app = express();
-app.use(cors());
+
+app.use(
+  cors({
+    origin: process.env.CLIENT_URL || "http://localhost:5173",
+  })
+);
+
 app.use(express.json());
 
-mongoose.connect(process.env.MONGODB_URI, {
-  useNewUrlParser: true,
-  useUnifiedTopology: true,
-}).then(() => {
-  console.log('MongoDB connected successfully');
-});
+app.use("/api", authRoutes);
+app.use("/api/users", userRoutes);
+app.use("/api/messages", messageRoutes);
 
-const authRoutes = require('./src/routes/auth');
-app.use('/api', authRoutes);
-
-const messageRoutes = require('./src/routes/rou-message');
-app.use('/api/messages', messageRoutes);
-
-// --- Socket.IO setup ---
-const server = require('http').createServer(app);
-const io = require('socket.io')(server, {
-  cors: {
-    origin: '*',
-    methods: ['GET', 'POST']
-  }
-});
-
-const Message = require('./src/models/message');
-
-io.on('connection', (socket) => {
-  console.log('User connected:', socket.id);
-
-  // Join a room for private chat (room name can be userId or a combination)
-  socket.on('joinRoom', ({ userId }) => {
-    socket.join(userId);
-  });
-
-  // Listen for sendMessage event
-  socket.on('sendMessage', async ({ sender, receiver, text }) => {
-    // Save message to MongoDB
-    const message = await Message.create({ sender, receiver, text });
-    // Emit to receiver's room
-    io.to(receiver).emit('receiveMessage', message);
-    // Optionally emit to sender for confirmation
-    io.to(sender).emit('receiveMessage', message);
-  });
-
-  socket.on('disconnect', () => {
-    console.log('User disconnected:', socket.id);
+app.get("/health", (req, res) => {
+  res.json({
+    status: "ok",
   });
 });
 
-// Change app.listen to server.listen
-server.listen(process.env.PORT, () => {
-  console.log(`Server running on port ${process.env.PORT}`);
+const server = http.createServer(app);
+
+initializeSocket(server);
+
+connectDB();
+
+const PORT = process.env.PORT || 5000;
+
+server.listen(PORT, () => {
+  console.log(`Server running on port ${PORT}`);
 });
