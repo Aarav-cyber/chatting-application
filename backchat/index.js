@@ -5,6 +5,7 @@ require("dotenv").config();
 
 const connectDB = require("./src/config/db");
 const initializeSocket = require("./src/socket");
+const { connectRedis } = require("./src/config/redis");
 
 const authRoutes = require("./src/routes/auth");
 const userRoutes = require("./src/routes/users");
@@ -32,12 +33,27 @@ app.get("/health", (req, res) => {
 
 const server = http.createServer(app);
 
-initializeSocket(server);
-
-connectDB();
-
 const PORT = process.env.PORT || 5000;
 
-server.listen(PORT, () => {
-  console.log(`Server running on port ${PORT}`);
-});
+const startServer = async () => {
+  try {
+    // 1. Connect to MongoDB
+    await connectDB();
+
+    // 2. Connect to Redis
+    await connectRedis();
+
+    // 3. Initialize Socket.IO
+    initializeSocket(server);
+
+    // 4. Start HTTP server
+    server.listen(PORT, () => {
+      console.log(`Server running on port ${PORT}`);
+    });
+  } catch (error) {
+    console.error("Failed to start server:", error);
+    process.exit(1);
+  }
+};
+
+startServer();

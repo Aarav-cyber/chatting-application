@@ -1,5 +1,8 @@
 const { Server } = require("socket.io");
+const { createAdapter } = require("@socket.io/redis-adapter");
+
 const Message = require("../models/message");
+const { pubClient, subClient } = require("../config/redis");
 
 const initializeSocket = (httpServer) => {
   const io = new Server(httpServer, {
@@ -8,6 +11,8 @@ const initializeSocket = (httpServer) => {
       methods: ["GET", "POST"],
     },
   });
+
+  io.adapter(createAdapter(pubClient, subClient));
 
   io.on("connection", (socket) => {
     console.log("User connected:", socket.id);

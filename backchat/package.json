@@ -21,7 +21,9 @@
     "socket.io": "^4.8.1"
   },
   "dependencies": {
+    "@socket.io/redis-adapter": "^8.3.0",
     "cors": "^2.8.5",
-    "nodemon": "^3.1.10"
+    "nodemon": "^3.1.10",
+    "redis": "^6.2.1"
   }
 }
