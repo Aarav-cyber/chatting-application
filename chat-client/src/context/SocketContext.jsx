@@ -10,55 +10,75 @@ import {
   disconnectSocket,
 } from "../services/socket";
 
-const SocketContext = createContext(null);
+import { useAuth } from "./AuthContext";
 
-export function SocketProvider({ children }) {
-  const [socket, setSocket] = useState(null);
+const SocketContext =
+  createContext(null);
+
+export function SocketProvider({
+  children,
+}) {
+  const { token } = useAuth();
+
+  const [socket, setSocket] =
+    useState(null);
 
   useEffect(() => {
-    const token = localStorage.getItem("chat_token");
-
     if (!token) {
+      disconnectSocket();
+      setSocket(null);
       return;
     }
 
-    const socketInstance = connectSocket();
+    const socketInstance =
+      connectSocket();
 
-    socketInstance.on("connect", () => {
-      console.log(
-        "Socket connected:",
-        socketInstance.id
-      );
-    });
+    socketInstance.on(
+      "connect",
+      () => {
+        console.log(
+          "Socket connected:",
+          socketInstance.id
+        );
+      }
+    );
 
-    socketInstance.on("connect_error", (error) => {
-      console.error(
-        "Socket connection error:",
-        error.message
-      );
-    });
+    socketInstance.on(
+      "connect_error",
+      (error) => {
+        console.error(
+          "Socket connection error:",
+          error.message
+        );
+      }
+    );
 
-    socketInstance.on("disconnect", (reason) => {
-      console.log(
-        "Socket disconnected:",
-        reason
-      );
-    });
+    socketInstance.on(
+      "disconnect",
+      (reason) => {
+        console.log(
+          "Socket disconnected:",
+          reason
+        );
+      }
+    );
 
     setSocket(socketInstance);
 
     return () => {
+      socketInstance.removeAllListeners();
       disconnectSocket();
     };
-  }, []);
+  }, [token]);
 
   return (
-    <SocketContext.Provider value={socket}>
+    <SocketContext.Provider
+      value={socket}
+    >
       {children}
     </SocketContext.Provider>
   );
 }
 
-export const useSocket = () => {
-  return useContext(SocketContext);
-};
+export const useSocket = () =>
+  useContext(SocketContext);
