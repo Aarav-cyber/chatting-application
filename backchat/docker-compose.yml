@@ -3,10 +3,12 @@ services:
   backend:
     build: .
     container_name: chat-backend
-    restart: unless-stopped
 
     ports:
       - "5000:5000"
+
+    environment:
+      INSTANCE_ID: server-1
 
     env_file:
       - .env
@@ -22,10 +24,12 @@ services:
   backend-2:
     build: .
     container_name: chat-backend-2
-    restart: unless-stopped
 
     ports:
       - "5001:5000"
+
+    environment:
+      INSTANCE_ID: server-2
 
     env_file:
       - .env

@@ -1,10 +1,53 @@
-const mongoose = require('mongoose');
+const mongoose = require("mongoose");
 
-const messageSchema = new mongoose.Schema({
-  sender: { type: mongoose.Schema.Types.ObjectId, ref: 'aarav', required: true }, // User model
-  receiver: { type: mongoose.Schema.Types.ObjectId, ref: 'aarav', required: true }, // User model
-  text: { type: String, required: true },
-  createdAt: { type: Date, default: Date.now }
+const messageSchema = new mongoose.Schema(
+  {
+    conversation: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Conversation",
+      required: true,
+      index: true,
+    },
+
+    sender: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "User",
+      required: true,
+    },
+
+    receiver: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "User",
+      required: true,
+    },
+
+    text: {
+      type: String,
+      required: true,
+      trim: true,
+    },
+
+    status: {
+      type: String,
+      enum: ["sent", "delivered", "read"],
+      default: "sent",
+    },
+
+    readAt: {
+      type: Date,
+      default: null,
+    },
+  },
+  {
+    timestamps: true,
+  }
+);
+
+messageSchema.index({
+  conversation: 1,
+  createdAt: 1,
 });
 
-module.exports = mongoose.model('Message', messageSchema);
+module.exports =
+  mongoose.models.Message ||
+  mongoose.model("Message", messageSchema);

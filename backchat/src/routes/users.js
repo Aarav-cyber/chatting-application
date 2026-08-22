@@ -1,9 +1,21 @@
 const express = require("express");
 
+const authenticate = require(
+  "../middleware/auth"
+);
+
+const {
+  searchUsers,
+} = require(
+  "../controllers/userController"
+);
+
 const router = express.Router();
 
-const userController = require("../controllers/userController");
-
-router.get("/", userController.getAllUsers);
+router.get(
+  "/search",
+  authenticate,
+  searchUsers
+);
 
 module.exports = router;

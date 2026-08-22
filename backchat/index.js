@@ -10,6 +10,7 @@ const { connectRedis } = require("./src/config/redis");
 const authRoutes = require("./src/routes/auth");
 const userRoutes = require("./src/routes/users");
 const messageRoutes = require("./src/routes/messages");
+const conversationRoutes = require("./src/routes/conversations");
 
 const app = express();
 
@@ -21,9 +22,21 @@ app.use(
 
 app.use(express.json());
 
-app.use("/api", authRoutes);
+// ===============================
+// Routes
+// ===============================
+
+app.use("/api/auth", authRoutes);
+
 app.use("/api/users", userRoutes);
+
 app.use("/api/messages", messageRoutes);
+
+app.use("/api/conversations", conversationRoutes);
+
+// ===============================
+// Health Check
+// ===============================
 
 app.get("/health", (req, res) => {
   res.json({
@@ -31,9 +44,17 @@ app.get("/health", (req, res) => {
   });
 });
 
+// ===============================
+// HTTP Server
+// ===============================
+
 const server = http.createServer(app);
 
 const PORT = process.env.PORT || 5000;
+
+// ===============================
+// Start Server
+// ===============================
 
 const startServer = async () => {
   try {
