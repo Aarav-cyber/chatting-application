@@ -7,60 +7,40 @@ import {
   createConversation,
 } from "../services/api";
 
-import {
-  useAuth,
-} from "../context/AuthContext";
+import { useAuth } from "../context/AuthContext";
 
-import {
-  useSocket,
-} from "../context/SocketContext";
+import { useSocket } from "../context/SocketContext";
 
 import ChatLayout from "../components/chat/ChatLayout";
 
 export default function Chat() {
-  const { user, logout } =
-    useAuth();
+  const { user, logout } = useAuth();
 
   const socket = useSocket();
 
-  const [
-    conversations,
-    setConversations,
-  ] = useState([]);
+  const [conversations, setConversations] = useState([]);
 
-  const [
-    selectedConversation,
-    setSelectedConversation,
-  ] = useState(null);
+  const [selectedConversation, setSelectedConversation] = useState(null);
 
-  const [
-    messages,
-    setMessages,
-  ] = useState([]);
+  const [messages, setMessages] = useState([]);
 
-  const [
-    searchResults,
-    setSearchResults,
-  ] = useState([]);
+  const [searchResults, setSearchResults] = useState([]);
+
+  const [typingUser, setTypingUser] = useState(null);
+
+  const [onlineUsers, setOnlineUsers] = useState(new Set());
 
   // Load conversations
   useEffect(() => {
-    const loadConversations =
-      async () => {
-        try {
-          const data =
-            await getConversations();
+    const loadConversations = async () => {
+      try {
+        const data = await getConversations();
 
-          setConversations(
-            data.conversations
-          );
-        } catch (error) {
-          console.error(
-            "Failed to load conversations:",
-            error
-          );
-        }
-      };
+        setConversations(data.conversations);
+      } catch (error) {
+        console.error("Failed to load conversations:", error);
+      }
+    };
 
     loadConversations();
   }, []);
@@ -71,191 +51,171 @@ export default function Chat() {
       return;
     }
 
-    const receiveMessage =
-      (message) => {
+    const receiveMessage = (message) => {
+      setMessages((current) => {
+        const exists = current.some((item) => item._id === message._id);
 
-        setMessages((current) => {
+        if (exists) {
+          return current;
+        }
 
-          const exists =
-            current.some(
-              (item) =>
-                item._id ===
-                message._id
-            );
+        return [...current, message];
+      });
+    };
 
-          if (exists) {
-            return current;
-          }
+    const messageSent = (message) => {
+      setMessages((current) => {
+        const exists = current.some((item) => item._id === message._id);
 
-          return [
-            ...current,
-            message,
-          ];
-        });
-      };
+        if (exists) {
+          return current;
+        }
 
-    const messageSent =
-      (message) => {
+        return [...current, message];
+      });
+    };
 
-        setMessages((current) => {
+    socket.on("receiveMessage", receiveMessage);
 
-          const exists =
-            current.some(
-              (item) =>
-                item._id ===
-                message._id
-            );
-
-          if (exists) {
-            return current;
-          }
-
-          return [
-            ...current,
-            message,
-          ];
-        });
-      };
-
-    socket.on(
-      "receiveMessage",
-      receiveMessage
-    );
-
-    socket.on(
-      "messageSent",
-      messageSent
-    );
+    socket.on("messageSent", messageSent);
 
     return () => {
-      socket.off(
-        "receiveMessage",
-        receiveMessage
-      );
+      socket.off("receiveMessage", receiveMessage);
 
-      socket.off(
-        "messageSent",
-        messageSent
-      );
+      socket.off("messageSent", messageSent);
+    };
+  }, [socket]);
+
+  // Typing listeners
+  useEffect(() => {
+    if (!socket) {
+      return;
+    }
+
+    const handleTyping = ({ userId }) => {
+      setTypingUser(userId);
+    };
+
+    const handleStoppedTyping = ({ userId }) => {
+      setTypingUser((current) => {
+        if (current === userId) {
+          return null;
+        }
+
+        return current;
+      });
+    };
+
+    socket.on("userTyping", handleTyping);
+
+    socket.on("userStoppedTyping", handleStoppedTyping);
+
+    return () => {
+      socket.off("userTyping", handleTyping);
+
+      socket.off("userStoppedTyping", handleStoppedTyping);
+    };
+  }, [socket]);
+
+  // Online presence listeners
+  useEffect(() => {
+    if (!socket) {
+      return;
+    }
+
+    const handleOnline = ({ userId }) => {
+      setOnlineUsers((current) => {
+        const next = new Set(current);
+
+        next.add(userId);
+
+        return next;
+      });
+    };
+
+    const handleOffline = ({ userId }) => {
+      setOnlineUsers((current) => {
+        const next = new Set(current);
+
+        next.delete(userId);
+
+        return next;
+      });
+    };
+
+    socket.on("userOnline", handleOnline);
+
+    socket.on("userOffline", handleOffline);
+
+    return () => {
+      socket.off("userOnline", handleOnline);
+
+      socket.off("userOffline", handleOffline);
     };
   }, [socket]);
 
   // Search users
-  const handleSearch = async (
-    query
-  ) => {
+  const handleSearch = async (query) => {
     if (!query.trim()) {
       setSearchResults([]);
       return;
     }
 
     try {
-      const data =
-        await getUsers(query);
+      const data = await getUsers(query);
 
-      setSearchResults(
-        data.users
-      );
+      setSearchResults(data.users);
     } catch (error) {
-      console.error(
-        "Search failed:",
-        error
-      );
+      console.error("Search failed:", error);
     }
   };
 
   // Select existing conversation
-  const handleSelectConversation =
-    async (conversation) => {
+  const handleSelectConversation = async (conversation) => {
+    setSelectedConversation(conversation);
 
-      setSelectedConversation(
-        conversation
-      );
+    try {
+      const data = await getMessages(conversation._id);
 
-      try {
-        const data =
-          await getMessages(
-            conversation._id
-          );
-
-        setMessages(
-          data.messages
-        );
-      } catch (error) {
-        console.error(
-          "Failed to load messages:",
-          error
-        );
-      }
-    };
+      setMessages(data.messages);
+    } catch (error) {
+      console.error("Failed to load messages:", error);
+    }
+  };
 
   // Start conversation with user
-  const handleSelectUser =
-    async (otherUser) => {
+  const handleSelectUser = async (otherUser) => {
+    try {
+      const data = await createConversation(otherUser._id);
 
-      try {
-        const data =
-          await createConversation(
-            otherUser._id
-          );
+      const conversation = data.conversation;
 
-        const conversation =
-          data.conversation;
+      setConversations((current) => {
+        const exists = current.some((item) => item._id === conversation._id);
 
-        setConversations(
-          (current) => {
+        if (exists) {
+          return current;
+        }
 
-            const exists =
-              current.some(
-                (item) =>
-                  item._id ===
-                  conversation._id
-              );
+        return [conversation, ...current];
+      });
 
-            if (exists) {
-              return current;
-            }
+      setSelectedConversation(conversation);
 
-            return [
-              conversation,
-              ...current,
-            ];
-          }
-        );
+      setSearchResults([]);
 
-        setSelectedConversation(
-          conversation
-        );
+      const messagesData = await getMessages(conversation._id);
 
-        setSearchResults([]);
-
-        const messagesData =
-          await getMessages(
-            conversation._id
-          );
-
-        setMessages(
-          messagesData.messages
-        );
-
-      } catch (error) {
-        console.error(
-          "Failed to create conversation:",
-          error
-        );
-      }
-    };
+      setMessages(messagesData.messages);
+    } catch (error) {
+      console.error("Failed to create conversation:", error);
+    }
+  };
 
   // Send message
-  const handleSendMessage = (
-    receiver,
-    text
-  ) => {
-
+  const handleSendMessage = (receiver, text) => {
     if (!socket) {
-      console.error(
-        "Socket is not connected"
-      );
+      console.error("Socket is not connected");
 
       return;
     }
@@ -267,42 +227,27 @@ export default function Chat() {
         text,
       },
       (response) => {
-
         if (!response?.success) {
-          console.error(
-            response?.message
-          );
+          console.error(response?.message);
         }
-      }
+      },
     );
   };
 
   return (
     <ChatLayout
-      conversations={
-        conversations
-      }
-      selectedConversation={
-        selectedConversation
-      }
-      onSelectConversation={
-        handleSelectConversation
-      }
-      onSearch={
-        handleSearch
-      }
-      searchResults={
-        searchResults
-      }
-      onSelectUser={
-        handleSelectUser
-      }
+      conversations={conversations}
+      selectedConversation={selectedConversation}
+      onSelectConversation={handleSelectConversation}
+      onSearch={handleSearch}
+      searchResults={searchResults}
+      onSelectUser={handleSelectUser}
       messages={messages}
-      onSendMessage={
-        handleSendMessage
-      }
+      onSendMessage={handleSendMessage}
       user={user}
       onLogout={logout}
+      typingUser={typingUser}
+      onlineUsers={onlineUsers}
     />
   );
 }
