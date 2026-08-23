@@ -61,6 +61,39 @@ export default function Chat() {
 
         return [...current, message];
       });
+
+      setConversations((current) => {
+        return current
+          .map((conversation) => {
+            if (conversation._id !== message.conversation) {
+              return conversation;
+            }
+
+            const isCurrentConversation =
+              selectedConversation?._id === conversation._id;
+
+            const unread = conversation.unreadCounts?.[user._id] || 0;
+
+            return {
+              ...conversation,
+
+              lastMessage: message,
+
+              lastMessageAt: message.createdAt,
+
+              unreadCounts: {
+                ...conversation.unreadCounts,
+
+                [user._id]: isCurrentConversation ? 0 : unread + 1,
+              },
+            };
+          })
+          .sort(
+            (a, b) =>
+              new Date(b.lastMessageAt || b.updatedAt) -
+              new Date(a.lastMessageAt || a.updatedAt),
+          );
+      });
     };
 
     const messageSent = (message) => {
@@ -84,7 +117,7 @@ export default function Chat() {
 
       socket.off("messageSent", messageSent);
     };
-  }, [socket]);
+  }, [socket, selectedConversation, user]);
 
   // Typing listeners
   useEffect(() => {
@@ -151,6 +184,60 @@ export default function Chat() {
       socket.off("userOnline", handleOnline);
 
       socket.off("userOffline", handleOffline);
+    };
+  }, [socket]);
+
+  // Mark messages as read when conversation is opened
+  useEffect(() => {
+    if (!socket || !selectedConversation) {
+      return;
+    }
+
+    socket.emit("markMessagesRead", {
+      conversationId: selectedConversation._id,
+    });
+  }, [socket, selectedConversation]);
+
+  // Delivery and read receipt listeners
+  useEffect(() => {
+    if (!socket) {
+      return;
+    }
+
+    const handleDelivered = ({ messageId }) => {
+      setMessages((current) =>
+        current.map((message) =>
+          message._id === messageId
+            ? {
+                ...message,
+                status: "delivered",
+              }
+            : message,
+        ),
+      );
+    };
+
+    const handleRead = ({ messageId }) => {
+      setMessages((current) =>
+        current.map((message) =>
+          message._id === messageId
+            ? {
+                ...message,
+                status: "read",
+              }
+            : message,
+        ),
+      );
+    };
+
+    socket.on("messageDelivered", handleDelivered);
+
+    socket.on("messageRead", handleRead);
+
+    return () => {
+      socket.off("messageDelivered", handleDelivered);
+
+      socket.off("messageRead", handleRead);
     };
   }, [socket]);
 

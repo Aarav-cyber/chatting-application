@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { useSocket } from "../../context/SocketContext";
+import MessageBubble from "./MessageBubble";
 
 export default function ChatWindow({
   conversation,
@@ -120,26 +121,7 @@ export default function ChatWindow({
               key={message._id}
               className={`flex ${isMine ? "justify-end" : "justify-start"}`}
             >
-              <div
-                className={`max-w-md rounded-2xl px-4 py-3 ${
-                  isMine
-                    ? "bg-slate-900 text-white"
-                    : "bg-white border border-slate-200"
-                }`}
-              >
-                <p>{message.text}</p>
-
-                <p
-                  className={`mt-1 text-[10px] ${
-                    isMine ? "text-slate-400" : "text-slate-400"
-                  }`}
-                >
-                  {new Date(message.createdAt).toLocaleTimeString([], {
-                    hour: "2-digit",
-                    minute: "2-digit",
-                  })}
-                </p>
-              </div>
+              <MessageBubble message={message} isMine={isMine} />
             </div>
           );
         })}

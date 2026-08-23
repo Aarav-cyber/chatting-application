@@ -68,6 +68,7 @@ export default function ChatLayout({
             const otherUser = conversation.participants.find(
               (participant) => participant._id !== user._id,
             );
+            const unreadCount = conversation.unreadCounts?.[user._id] || 0;
 
             return (
               <button
@@ -85,7 +86,15 @@ export default function ChatLayout({
                 />
 
                 <div className="min-w-0">
-                  <p className="font-medium">{otherUser?.name}</p>
+                  <div className="flex items-center justify-between">
+                    <p className="font-medium">{otherUser?.name}</p>
+
+                    {unreadCount > 0 && (
+                      <span className="rounded-full bg-slate-900 px-2 py-0.5 text-xs text-white">
+                        {unreadCount}
+                      </span>
+                    )}
+                  </div>
 
                   <p className="text-sm text-slate-500 truncate">
                     {conversation.lastMessage?.text || "No messages yet"}
