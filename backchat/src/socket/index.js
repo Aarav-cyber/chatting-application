@@ -9,7 +9,11 @@ const { pubClient, subClient } = require("../config/redis");
 
 const { getOrCreateConversation } = require("../services/conversationService");
 
-const onlineUsers = new Map();
+const {
+  addSocket,
+  removeSocket,
+  isUserOnline,
+} = require("../services/presenceService");
 
 const initializeSocket = (httpServer) => {
   const io = new Server(httpServer, {
@@ -58,7 +62,7 @@ const initializeSocket = (httpServer) => {
   // Socket Connection
   // ==========================================
 
-  io.on("connection", (socket) => {
+  io.on("connection", async (socket) => {
     console.log(
       `[${process.env.INSTANCE_ID}] User connected: ${socket.userId}`,
     );
@@ -149,25 +153,18 @@ const initializeSocket = (httpServer) => {
     });
 
     // ========================================
-    // User Room
+    // User Room / Presence
     // ========================================
 
-    // Every authenticated user gets
-    // their own room.
+    const socketCount = await addSocket(socket.userId, socket.id);
+
     socket.join(socket.userId);
 
     console.log(
-      `[${process.env.INSTANCE_ID}] User ${socket.userId} joined room`,
+      `[${process.env.INSTANCE_ID}] ${socket.userId} now has ${socketCount} active socket(s)`,
     );
 
-    // Track number of active sockets for this user
-    const currentConnections = onlineUsers.get(socket.userId) || 0;
-
-    onlineUsers.set(socket.userId, currentConnections + 1);
-
-    // Only announce online when the first
-    // socket connects
-    if (currentConnections === 0) {
+    if (socketCount === 1) {
       io.emit("userOnline", {
         userId: socket.userId,
       });
@@ -262,24 +259,26 @@ const initializeSocket = (httpServer) => {
     // Disconnect
     // ========================================
 
-    socket.on("disconnect", (reason) => {
+    socket.on("disconnect", async (reason) => {
       console.log(
         `[${process.env.INSTANCE_ID}] User disconnected: ${socket.userId}`,
         reason,
       );
 
-      const currentConnections = onlineUsers.get(socket.userId) || 0;
+      try {
+        const remainingSockets = await removeSocket(socket.userId, socket.id);
 
-      if (currentConnections <= 1) {
-        // No active sockets remaining
-        onlineUsers.delete(socket.userId);
+        console.log(
+          `[${process.env.INSTANCE_ID}] ${socket.userId} has ${remainingSockets} socket(s) remaining`,
+        );
 
-        io.emit("userOffline", {
-          userId: socket.userId,
-        });
-      } else {
-        // User still has other tabs/devices connected
-        onlineUsers.set(socket.userId, currentConnections - 1);
+        if (remainingSockets === 0) {
+          io.emit("userOffline", {
+            userId: socket.userId,
+          });
+        }
+      } catch (error) {
+        console.error("Presence cleanup error:", error);
       }
     });
   });

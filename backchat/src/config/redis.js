@@ -1,39 +1,52 @@
-const { createClient } = require("redis");
-
+const Redis = require("ioredis");
 
 const redisUrl =
-  process.env.REDIS_URL || `redis://${process.env.REDIS_HOST}:${process.env.REDIS_PORT}`;
+  process.env.REDIS_URL ||
+  "redis://redis:6379";
 
-const pubClient = createClient({
-  url: redisUrl,
-});
+const pubClient = new Redis(redisUrl);
 
 const subClient = pubClient.duplicate();
 
-const connectRedis = async () => {
-  try {
-    pubClient.on("error", (error) => {
-      console.error("Redis Publisher Error:", error);
-    });
+const presenceClient = new Redis(redisUrl);
 
-    subClient.on("error", (error) => {
-      console.error("Redis Subscriber Error:", error);
-    });
+pubClient.on("connect", () => {
+  console.log("Redis pub client connected");
+});
 
-    await Promise.all([
-      pubClient.connect(),
-      subClient.connect(),
-    ]);
+subClient.on("connect", () => {
+  console.log("Redis sub client connected");
+});
 
-    console.log("Redis connected successfully");
-  } catch (error) {
-    console.error("Redis connection failed:", error.message);
-    process.exit(1);
-  }
-};
+presenceClient.on("connect", () => {
+  console.log(
+    "Redis presence client connected"
+  );
+});
+
+pubClient.on("error", (error) => {
+  console.error(
+    "Redis pub client error:",
+    error
+  );
+});
+
+subClient.on("error", (error) => {
+  console.error(
+    "Redis sub client error:",
+    error
+  );
+});
+
+presenceClient.on("error", (error) => {
+  console.error(
+    "Redis presence client error:",
+    error
+  );
+});
 
 module.exports = {
   pubClient,
   subClient,
-  connectRedis,
-};  
+  presenceClient,
+};

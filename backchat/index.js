@@ -5,19 +5,20 @@ require("dotenv").config();
 
 const connectDB = require("./src/config/db");
 const initializeSocket = require("./src/socket");
-const { connectRedis } = require("./src/config/redis");
+require("./src/config/redis");
 
 const authRoutes = require("./src/routes/auth");
 const userRoutes = require("./src/routes/users");
 const messageRoutes = require("./src/routes/messages");
 const conversationRoutes = require("./src/routes/conversations");
+const presenceRoutes = require("./src/routes/presence");
 
 const app = express();
 
 app.use(
   cors({
     origin: process.env.CLIENT_URL || "http://localhost:5173",
-  })
+  }),
 );
 
 app.use(express.json());
@@ -25,6 +26,7 @@ app.use(express.json());
 // ===============================
 // Routes
 // ===============================
+app.use("/api/presence", presenceRoutes);
 
 app.use("/api/auth", authRoutes);
 
@@ -62,7 +64,7 @@ const startServer = async () => {
     await connectDB();
 
     // 2. Connect to Redis
-    await connectRedis();
+    // await connectRedis();
 
     // 3. Initialize Socket.IO
     initializeSocket(server);
