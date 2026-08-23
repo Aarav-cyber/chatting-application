@@ -1,4 +1,3 @@
-````md
 # BackChat — Scalable Real-Time Chat Platform
 
 BackChat is a full-stack, real-time messaging platform built with **React, Node.js, Express, MongoDB, Socket.IO, Redis, and Docker**.
@@ -77,7 +76,6 @@ User search
 Conversation history
 Conversation creation
 Initial application data
-````
 
 Socket.IO is used when the application needs low-latency real-time communication:
 
