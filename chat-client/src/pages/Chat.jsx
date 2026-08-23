@@ -5,6 +5,7 @@ import {
   getMessages,
   getUsers,
   createConversation,
+  getPresence,
 } from "../services/api";
 
 import { useAuth } from "../context/AuthContext";
@@ -30,20 +31,39 @@ export default function Chat() {
 
   const [onlineUsers, setOnlineUsers] = useState(new Set());
 
-  // Load conversations
+  // Load conversations and initial presence
   useEffect(() => {
     const loadConversations = async () => {
       try {
         const data = await getConversations();
 
         setConversations(data.conversations);
+
+        const otherUserIds = data.conversations
+          .flatMap((conversation) => conversation.participants)
+          .filter((participant) => participant._id !== user._id)
+          .map((participant) => participant._id);
+
+        const uniqueUserIds = [...new Set(otherUserIds)];
+
+        if (uniqueUserIds.length > 0) {
+          const presenceData = await getPresence(uniqueUserIds);
+
+          const onlineIds = Object.entries(presenceData.presence)
+            .filter(([, online]) => online)
+            .map(([userId]) => userId);
+
+          setOnlineUsers(new Set(onlineIds));
+        }
       } catch (error) {
         console.error("Failed to load conversations:", error);
       }
     };
 
-    loadConversations();
-  }, []);
+    if (user?._id) {
+      loadConversations();
+    }
+  }, [user]);
 
   // Socket listeners
   useEffect(() => {
