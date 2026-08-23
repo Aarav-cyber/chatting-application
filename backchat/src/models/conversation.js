@@ -22,6 +22,11 @@ const conversationSchema = new mongoose.Schema(
       ref: "Message",
       default: null,
     },
+    unreadCounts: {
+      type: Map,
+      of: Number,
+      default: {},
+    },
 
     lastMessageAt: {
       type: Date,
@@ -30,7 +35,7 @@ const conversationSchema = new mongoose.Schema(
   },
   {
     timestamps: true,
-  }
+  },
 );
 
 conversationSchema.index({
@@ -40,7 +45,4 @@ conversationSchema.index({
 
 module.exports =
   mongoose.models.Conversation ||
-  mongoose.model(
-    "Conversation",
-    conversationSchema
-  );
+  mongoose.model("Conversation", conversationSchema);
