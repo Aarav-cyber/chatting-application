@@ -15,6 +15,10 @@ const {
   isUserOnline,
 } = require("../services/presenceService");
 
+const {
+  createMessageNotification,
+} = require("../services/notificationService");
+
 const initializeSocket = (httpServer) => {
   const io = new Server(httpServer, {
     cors: {
@@ -184,6 +188,14 @@ const initializeSocket = (httpServer) => {
           });
         }
 
+        // Prevent sending messages to yourself
+        if (socket.userId.toString() === receiver.toString()) {
+          return callback?.({
+            success: false,
+            message: "You cannot send a message to yourself",
+          });
+        }
+
         // Create or find conversation
         const conversation = await getOrCreateConversation(
           socket.userId,
@@ -226,6 +238,29 @@ const initializeSocket = (httpServer) => {
         conversation.lastMessageAt = message.createdAt;
 
         await conversation.save();
+
+        // ========================================
+        // Notification
+        // ========================================
+
+        const notification = await createMessageNotification({
+          recipient: receiver,
+          sender: socket.userId,
+          conversation: conversation._id,
+          message: message._id,
+        });
+
+        await notification.populate("sender", "name email profilePic");
+
+        await notification.populate("message", "text createdAt");
+
+        await notification.populate("conversation", "_id");
+
+        io.to(receiver).emit("newNotification", notification);
+
+        // ========================================
+        // Populate message
+        // ========================================
 
         // Populate sender
         await message.populate("sender", "name email profilePic");

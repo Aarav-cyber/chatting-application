@@ -12,6 +12,7 @@ const userRoutes = require("./src/routes/users");
 const messageRoutes = require("./src/routes/messages");
 const conversationRoutes = require("./src/routes/conversations");
 const presenceRoutes = require("./src/routes/presence");
+const notificationRoutes = require("./src/routes/notifications");
 
 const app = express();
 
@@ -35,6 +36,8 @@ app.use("/api/users", userRoutes);
 app.use("/api/messages", messageRoutes);
 
 app.use("/api/conversations", conversationRoutes);
+
+app.use("/api/notifications", notificationRoutes);
 
 // ===============================
 // Health Check
