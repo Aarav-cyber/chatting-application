@@ -6,30 +6,24 @@ import {
   getUsers,
   createConversation,
   getPresence,
+  getNotifications,
+  markNotificationRead,
 } from "../services/api";
-
 import { useAuth } from "../context/AuthContext";
-
 import { useSocket } from "../context/SocketContext";
-
 import ChatLayout from "../components/chat/ChatLayout";
 
 export default function Chat() {
   const { user, logout } = useAuth();
-
   const socket = useSocket();
-
   const [conversations, setConversations] = useState([]);
-
   const [selectedConversation, setSelectedConversation] = useState(null);
-
   const [messages, setMessages] = useState([]);
-
   const [searchResults, setSearchResults] = useState([]);
-
   const [typingUser, setTypingUser] = useState(null);
-
   const [onlineUsers, setOnlineUsers] = useState(new Set());
+  const [notifications, setNotifications] = useState([]);
+  const [unreadNotifications, setUnreadNotifications] = useState(0);
 
   // Load conversations and initial presence
   useEffect(() => {
@@ -261,6 +255,41 @@ export default function Chat() {
     };
   }, [socket]);
 
+  // Real-time notification listener
+  useEffect(() => {
+    if (!socket) {
+      return;
+    }
+
+    const handleNotification = (notification) => {
+      setNotifications((current) => [notification, ...current]);
+
+      setUnreadNotifications((current) => current + 1);
+    };
+
+    socket.on("newNotification", handleNotification);
+
+    return () => {
+      socket.off("newNotification", handleNotification);
+    };
+  }, [socket]);
+
+  // Load notifications on startup
+  useEffect(() => {
+    const loadNotifications = async () => {
+      try {
+        const data = await getNotifications();
+
+        setNotifications(data.notifications);
+        setUnreadNotifications(data.unreadCount);
+      } catch (error) {
+        console.error("Failed to load notifications:", error);
+      }
+    };
+
+    loadNotifications();
+  }, []);
+
   // Search users
   const handleSearch = async (query) => {
     if (!query.trim()) {
@@ -341,6 +370,36 @@ export default function Chat() {
     );
   };
 
+  // Handle notification click
+  const handleNotificationClick = async (notification) => {
+    try {
+      const conversation = conversations.find(
+        (item) => item._id === notification.conversation?._id,
+      );
+
+      if (conversation) {
+        await handleSelectConversation(conversation);
+      }
+
+      await markNotificationRead(notification._id);
+
+      setNotifications((current) =>
+        current.map((item) =>
+          item._id === notification._id
+            ? {
+                ...item,
+                read: true,
+              }
+            : item,
+        ),
+      );
+
+      setUnreadNotifications((current) => Math.max(0, current - 1));
+    } catch (error) {
+      console.error("Notification click error:", error);
+    }
+  };
+
   return (
     <ChatLayout
       conversations={conversations}
@@ -355,6 +414,9 @@ export default function Chat() {
       onLogout={logout}
       typingUser={typingUser}
       onlineUsers={onlineUsers}
+      notifications={notifications}
+      unreadNotifications={unreadNotifications}
+      onNotificationClick={handleNotificationClick}
     />
   );
 }
